@@ -158,7 +158,14 @@ func RunCombined(input CombinedInput, tuner RuntimeTuner) CombinedResult {
 		result.PodStatus = PodStatusInfeasible
 		result.VPAAction = fmt.Sprintf("%s(InPlaceOrRecreate)", recommendationAction)
 		if result.Replicas < input.HPA.MaxReplicas {
-			result.Replicas++
+			fallbackStep := input.HPA.StepUp
+			if fallbackStep <= 0 {
+				fallbackStep = 1
+			}
+			result.Replicas += fallbackStep
+			if result.Replicas > input.HPA.MaxReplicas {
+				result.Replicas = input.HPA.MaxReplicas
+			}
 			if result.HPAAction == HPAActionNoChange {
 				result.HPAAction = HPAActionFallbackScaleOut
 			} else {

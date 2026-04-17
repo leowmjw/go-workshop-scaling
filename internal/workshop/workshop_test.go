@@ -111,8 +111,8 @@ func Test_HPA_VPA_Conflict_Simulation(t *testing.T) {
 	if result.PodStatus != PodStatusInfeasible {
 		t.Fatalf("expected pod status Infeasible, got %s", result.PodStatus)
 	}
-	if result.Replicas != 9 {
-		t.Fatalf("expected HPA to scale out to 9 replicas, got %d", result.Replicas)
+	if result.Replicas != 10 {
+		t.Fatalf("expected HPA to scale out to 10 replicas, got %d", result.Replicas)
 	}
 	if result.MemoryLimitMB != 1024 {
 		t.Fatalf("expected memory limit unchanged due to infeasible resize, got %d", result.MemoryLimitMB)
