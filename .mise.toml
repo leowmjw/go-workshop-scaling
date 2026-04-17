@@ -1,0 +1,15 @@
+[env]
+CGO_ENABLED = "0"
+PATH = "{{env.HOME}}/go/bin:{{env.PATH}}"
+
+[tasks.test]
+run = "go test ./..."
+
+[tasks."part1:dev"]
+run = "overmind start -f Procfile.part1"
+
+[tasks."part2:dev"]
+run = "overmind start -f Procfile.part2"
+
+[tasks."part3:dev"]
+run = "overmind start -f Procfile.part3"
