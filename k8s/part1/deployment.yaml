@@ -1,0 +1,35 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: part1srv
+  namespace: workshop
+  labels:
+    app: part1srv
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: part1srv
+  template:
+    metadata:
+      labels:
+        app: part1srv
+    spec:
+      containers:
+        - name: part1srv
+          image: workshop/part1srv:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8080
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8080
+            initialDelaySeconds: 2
+            periodSeconds: 5
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8080
+            initialDelaySeconds: 3
+            periodSeconds: 10

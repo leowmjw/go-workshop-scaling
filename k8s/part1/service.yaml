@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: part1srv
+  namespace: workshop
+  labels:
+    app: part1srv
+spec:
+  type: ClusterIP
+  selector:
+    app: part1srv
+  ports:
+    - name: http
+      port: 8080
+      targetPort: 8080

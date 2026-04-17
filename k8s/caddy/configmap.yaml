@@ -1,0 +1,26 @@
+# Caddyfile mounted into the Caddy deployment.
+# Caddy acts as the internal load balancer for all workshop parts.
+# Services are addressed via in-cluster k8s DNS (same namespace = short names).
+# From OrbStack, the Caddy LoadBalancer IP is reachable directly via Docker networking.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: caddy-config
+  namespace: workshop
+data:
+  Caddyfile: |
+    :80 {
+        route /part1* {
+            uri strip_prefix /part1
+            reverse_proxy part1srv:8080
+        }
+        route /part2* {
+            uri strip_prefix /part2
+            reverse_proxy part2srv:8080
+        }
+        route /part3* {
+            uri strip_prefix /part3
+            reverse_proxy part3srv:8080
+        }
+        respond /health 200
+    }
