@@ -18,7 +18,7 @@ func (noopRuntime) GC()                    {}
 func main() {
 	mux := http.NewServeMux()
 
-	mux.HandleFunc("/simulate", func(w http.ResponseWriter, r *http.Request) {
+	mux.HandleFunc("GET /simulate", func(w http.ResponseWriter, r *http.Request) {
 		q := r.URL.Query()
 		replicas := queryInt(q.Get("replicas"), 3)
 		cpu := queryInt(q.Get("cpu"), 85)
@@ -47,14 +47,16 @@ func main() {
 		}, noopRuntime{})
 
 		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(map[string]any{
+		if err := json.NewEncoder(w).Encode(map[string]any{
 			"part":   "part3-hpa-vpa",
 			"input":  map[string]any{"replicas": replicas, "cpu_pct": cpu, "mem_pct": memPct, "node_free_mb": nodeFree},
 			"result": result,
-		})
+		}); err != nil {
+			slog.Error("encode response", "err", err)
+		}
 	})
 
-	mux.HandleFunc("/health", func(w http.ResponseWriter, _ *http.Request) {
+	mux.HandleFunc("GET /health", func(w http.ResponseWriter, _ *http.Request) {
 		w.WriteHeader(http.StatusOK)
 	})
 

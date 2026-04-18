@@ -2,7 +2,7 @@ package main
 
 import (
 	"encoding/json"
-	"log"
+	"log/slog"
 	"os"
 
 	"github.com/leowmjw/go-workshop-scaling/internal/workshop"
@@ -23,11 +23,14 @@ func main() {
 
 	memory, action := workshop.ApplyVPA(1024, recommended, noopRuntime{})
 
-	_ = json.NewEncoder(os.Stdout).Encode(map[string]any{
+	if err := json.NewEncoder(os.Stdout).Encode(map[string]any{
 		"part":          "part2-vpa",
 		"memoryLimitMB": memory,
 		"action":        action,
-	})
+	}); err != nil {
+		slog.Error("encode output", "err", err)
+		os.Exit(1)
+	}
 
-	log.Println("part2 complete")
+	slog.Info("part2 complete")
 }

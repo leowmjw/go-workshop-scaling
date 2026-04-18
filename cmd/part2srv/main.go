@@ -18,7 +18,7 @@ func (noopRuntime) GC()                    {}
 func main() {
 	mux := http.NewServeMux()
 
-	mux.HandleFunc("/simulate", func(w http.ResponseWriter, r *http.Request) {
+	mux.HandleFunc("GET /simulate", func(w http.ResponseWriter, r *http.Request) {
 		q := r.URL.Query()
 		currentMB := int64(queryInt(q.Get("current_mb"), 1024))
 		memPct := queryInt(q.Get("mem_pct"), 20)
@@ -34,15 +34,17 @@ func main() {
 		newLimit, action := workshop.ApplyVPA(currentMB, recommended, noopRuntime{})
 
 		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(map[string]any{
+		if err := json.NewEncoder(w).Encode(map[string]any{
 			"part":   "part2-vpa",
 			"input":  map[string]any{"current_mb": currentMB, "mem_pct": memPct},
 			"limit":  newLimit,
 			"action": action,
-		})
+		}); err != nil {
+			slog.Error("encode response", "err", err)
+		}
 	})
 
-	mux.HandleFunc("/health", func(w http.ResponseWriter, _ *http.Request) {
+	mux.HandleFunc("GET /health", func(w http.ResponseWriter, _ *http.Request) {
 		w.WriteHeader(http.StatusOK)
 	})
 

@@ -1,3 +1,6 @@
+[tools]
+go = "1.26"
+
 [env]
 CGO_ENABLED = "0"
 _.path = ["{{env.HOME}}/go/bin"]

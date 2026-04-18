@@ -2,7 +2,7 @@ package main
 
 import (
 	"encoding/json"
-	"log"
+	"log/slog"
 	"os"
 
 	"github.com/leowmjw/go-workshop-scaling/internal/workshop"
@@ -37,13 +37,16 @@ func main() {
 		},
 	}, noopRuntime{})
 
-	_ = json.NewEncoder(os.Stdout).Encode(map[string]any{
+	if err := json.NewEncoder(os.Stdout).Encode(map[string]any{
 		"part":     "part3-hpa-vpa",
 		"replicas": result.Replicas,
 		"vpa":      result.VPAStatus,
 		"pod":      result.PodStatus,
 		"hpa":      result.HPAAction,
-	})
+	}); err != nil {
+		slog.Error("encode output", "err", err)
+		os.Exit(1)
+	}
 
-	log.Println("part3 complete")
+	slog.Info("part3 complete")
 }
