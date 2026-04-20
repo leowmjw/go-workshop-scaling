@@ -1,0 +1,94 @@
+[tools]
+go = "1.26"
+
+[env]
+CGO_ENABLED = "0"
+_.path = ["{{env.HOME}}/go/bin"]
+
+[tasks.test]
+run = "go test ./..."
+
+[tasks."part1:dev"]
+run = "overmind start -f Procfile.part1"
+
+[tasks."part2:dev"]
+run = "overmind start -f Procfile.part2"
+
+[tasks."part3:dev"]
+run = "overmind start -f Procfile.part3"
+
+# ---------------------------------------------------------------------------
+# vind (vCluster in Docker) tasks — real Kubernetes on OrbStack
+#
+# Prerequisites:
+#   vcluster upgrade --version v0.31.0   # ensure vCluster CLI ≥ 0.31
+#   vcluster use driver docker            # switch to Docker driver (vind mode)
+#   OrbStack must be running (provides Docker + *.orb.local DNS)
+#
+# DNS topology:
+#   In-cluster    : <svc>.workshop.svc.cluster.local
+#   From Mac      : Caddy LoadBalancer IP (see `mise run vind:status`)
+#                   OrbStack routes Docker IPs directly; no port-forward needed.
+#   LB container  : vind creates a Docker container per LoadBalancer service,
+#                   accessible as vcluster.lb.workshop.caddy-workshop.orb.local
+#                   (OrbStack's native *.orb.local DNS) once the LB is assigned.
+# ---------------------------------------------------------------------------
+
+[tasks."vind:setup"]
+description = "Create the vind workshop cluster and deploy Caddy as internal load balancer"
+run = """
+  vcluster use driver docker
+  vcluster create workshop --connect
+  kubectl apply -f k8s/namespace.yaml
+  kubectl apply -f k8s/caddy/ -n workshop
+  kubectl rollout status deployment/caddy -n workshop
+  echo ""
+  echo "Caddy internal LB ready. Deploy a part with: mise run part1:vind"
+"""
+
+[tasks."vind:teardown"]
+description = "Delete the vind workshop cluster"
+run = "vcluster delete workshop"
+
+[tasks."vind:status"]
+description = "Show all running resources and the Caddy access URL"
+run = """
+  kubectl get all -n workshop
+  echo ""
+  CADDY_IP=$(kubectl get svc caddy -n workshop -o jsonpath='{.status.loadBalancer.ingress[0].ip}' 2>/dev/null)
+  if [ -n "$CADDY_IP" ]; then
+    echo "Caddy URL  : http://$CADDY_IP"
+    echo "  Part 1   : http://$CADDY_IP/part1/simulate?replicas=2&cpu=85"
+    echo "  Part 2   : http://$CADDY_IP/part2/simulate?current_mb=1024&mem_pct=20"
+    echo "  Part 3   : http://$CADDY_IP/part3/simulate?replicas=3&cpu=85&mem_pct=92&node_free_mb=0"
+  else
+    echo "Caddy LB IP not yet assigned. Re-run after a moment."
+  fi
+"""
+
+[tasks."part1:vind"]
+description = "Build + deploy Part 1 (HPA demo) to the vind cluster"
+run = """
+  docker build -t workshop/part1srv:latest -f cmd/part1srv/Dockerfile .
+  kubectl apply -f k8s/part1/ -n workshop
+  kubectl rollout status deployment/part1srv -n workshop
+  mise run vind:status
+"""
+
+[tasks."part2:vind"]
+description = "Build + deploy Part 2 (VPA demo) to the vind cluster"
+run = """
+  docker build -t workshop/part2srv:latest -f cmd/part2srv/Dockerfile .
+  kubectl apply -f k8s/part2/ -n workshop
+  kubectl rollout status deployment/part2srv -n workshop
+  mise run vind:status
+"""
+
+[tasks."part3:vind"]
+description = "Build + deploy Part 3 (HPA+VPA combo demo) to the vind cluster"
+run = """
+  docker build -t workshop/part3srv:latest -f cmd/part3srv/Dockerfile .
+  kubectl apply -f k8s/part3/ -n workshop
+  kubectl rollout status deployment/part3srv -n workshop
+  mise run vind:status
+"""

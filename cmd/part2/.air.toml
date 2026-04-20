@@ -1,0 +1,5 @@
+root = "."
+
+[build]
+cmd = "go run ./cmd/part2"
+bin = "tmp/part2"

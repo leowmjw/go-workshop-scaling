@@ -1,0 +1,21 @@
+# LoadBalancer so vind (vCluster in Docker) exposes an external IP via its
+# built-in Docker LB support.  OrbStack routes Docker IPs from the host,
+# so the assigned IP is directly reachable from the Mac without port-forward.
+# In-cluster: caddy.workshop.svc.cluster.local
+# From Mac (OrbStack k8s): caddy.workshop.svc.cluster.local (OrbStack ≥1.3)
+# From Mac (vind / Docker): use the EXTERNAL-IP from `kubectl get svc caddy -n workshop`
+apiVersion: v1
+kind: Service
+metadata:
+  name: caddy
+  namespace: workshop
+  labels:
+    app: caddy
+spec:
+  type: LoadBalancer
+  selector:
+    app: caddy
+  ports:
+    - name: http
+      port: 80
+      targetPort: 80
